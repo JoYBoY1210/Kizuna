@@ -16,6 +16,7 @@ func ChunkFile(filePath string) (int, error) {
 	}
 	defer file.Close()
 
+	os.RemoveAll("chunks")
 	error = os.MkdirAll("chunks", os.ModePerm)
 	if error != nil {
 		return 0, error
@@ -34,6 +35,7 @@ func ChunkFile(filePath string) (int, error) {
 		if err != nil {
 			return 0, err
 		}
+		defer chunkFile.Close() 
 		_, err = chunkFile.Write(buffer[:bytesRead])
 		if err != nil {
 			return 0, err
@@ -43,7 +45,7 @@ func ChunkFile(filePath string) (int, error) {
 		if readErr == io.EOF {
 			break
 		} else if readErr != nil {
-			return chunkCount, nil
+			return chunkCount, readErr 
 		}
 	}
 	return chunkCount, nil

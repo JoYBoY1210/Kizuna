@@ -1,63 +1,47 @@
 package main
 
 import (
-	"kizuna/files"
-	"kizuna/server"
-	"kizuna/downloads"
+	// "kizuna/files"
+	// "kizuna/server"
+	// "kizuna/downloads"
 	"fmt"
 	"os"
-	"kizuna/types"
-	"time"
+	// "kizuna/types"
+	// "time"
+	"flag"
 
 )
 
 func main() {
-	path := "C:\\Users\\tanish\\Desktop\\tanish 11th\\Acids.pdf"
-	count, err := files.ChunkFile(path)
-	if err != nil {
-		fmt.Println("Error chunking file:", err)
-		return
-	}
-	fmt.Println("Number of chunks created:", count)
+	seedCmd:=flag.NewFlagSet("seed", flag.ExitOnError)
+	downloadCmd:=flag.NewFlagSet("download", flag.ExitOnError)
 
-	hashes, err := files.HashChunks("chunks")
-	if err != nil {
-		fmt.Println("Error hashing chunks:", err)
-		return
-	}
-	
-	info, err := os.Stat(path)
-	if err != nil {
-		fmt.Println("Error getting file info:", err)
-		return
-	}
-	meta := types.MetaFile{
-		FileName:    info.Name(),
-		FileSize:    info.Size(),
-		ChunkSize:   1024 * 1024,
-		NumChunks:   count,
-		ChunkHashes: hashes,
-		Peers:       []string{"http://localhost:8080"},
+	filePath:=seedCmd.String("file", "", "File to seed")
+	port:=seedCmd.String("port", "6253", "Port to run the server on")
+	peerList:=seedCmd.String("peers", "", "list of peer addresses")
+	metaPath:=seedCmd.String("meta", "", "Path to metadata file(optional)")
+
+	downloadMeta:=downloadCmd.String("meta", "", "Path to metadata file")
+	outputFile:=downloadCmd.String("output", "output_file", "Output file path")
+
+	if len(os.Args)<2{
+		fmt.Println("expected 'seed' or 'download' subcommands")
+		os.Exit(1)
 	}
 
-	err = files.NewMetaFile(meta, fmt.Sprintf("%s.meta", info.Name()))
-	if err != nil {
-		fmt.Println("Error creating meta file:", err)
-		return
+	switch os.Args[1]{
+	case "seed":
+		seedCmd.Parse(os.Args[2:])
+		handleSeed(*filePath, *port, *peerList, *metaPath)
+
+	case "download":
+		downloadCmd.Parse(os.Args[2:])
+		handleDownload(*downloadMeta, *outputFile)
+
+	default:
+		fmt.Println("expected 'seed' or 'download' subcommands")
+		os.Exit(1)
 	}
 
-	go func() {
-		server.ChunkServer("8080", "chunks")
-
-	}()
-	
-	time.Sleep(1 * time.Second)
-	err = downloads.DownloadFile("Acids.pdf.meta", "output.pdf")
-	if err != nil {
-		fmt.Println("Error downloading file:", err)
-		return
-	}
-	select {}
-	
 
 }

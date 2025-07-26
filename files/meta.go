@@ -8,11 +8,11 @@ import (
 
 
 
-func NewMetaFile(meta types.MetaFile, outputPath string) error {
+func NewMetaFile(meta types.MetaFile,filepath string) error {
 	data, err := json.MarshalIndent(meta, "", "  ")
 	if err != nil {
 		return err
 	}
 
-	return os.WriteFile(outputPath, data, 0644)
+	return os.WriteFile(filepath, data, 0644)
 }

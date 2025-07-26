@@ -7,7 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"sort"
+	// "sort"
 )
 
 func HashChunks(chunkDir string) (map[int]string, error) {
@@ -16,9 +16,9 @@ func HashChunks(chunkDir string) (map[int]string, error) {
 		fmt.Println("Error finding chunk files:", err)
 		return nil, err
 	}
-	sort.Slice(files, func(i, j int) bool {
-		return files[i] < files[j]
-	})
+	// sort.Slice(files, func(i, j int) bool {
+	// 	return files[i] < files[j]
+	// })
 	
 
 	hashes := make(map[int]string)

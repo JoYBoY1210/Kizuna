@@ -7,9 +7,12 @@ import (
 	"fmt"
 	"io"
 	"kizuna/types"
+	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
+	"time"
 )
 
 func DownloadFile(metaPath string, outputPath string) error {
@@ -31,14 +34,30 @@ func DownloadFile(metaPath string, outputPath string) error {
 		return fmt.Errorf("error creating temp directory: %v", err)
 	}
 
+	var wg sync.WaitGroup
+	errs := make(chan error, meta.NumChunks)
+
 	for i := 0; i < meta.NumChunks; i++ {
-		chunkFile := filepath.Join(tempDir, fmt.Sprintf("chunk_%d", i))
-		
-		expectedHash := meta.ChunkHashes[i]
-		if err := downloadChunk(i, chunkFile, expectedHash, meta.Peers); err != nil {
-			return fmt.Errorf("error downloading chunk %d: %v", i, err)
-		}
-		fmt.Println("Downloaded chunk:", i)
+		wg.Add(1)
+		go func(chunkIndex int) {
+			defer wg.Done()
+			chunkFile := filepath.Join(tempDir, fmt.Sprintf("chunk_%d", chunkIndex))
+
+			expectedHash := meta.ChunkHashes[chunkIndex]
+			err := downloadChunk(chunkIndex, chunkFile, expectedHash, meta.Peers)
+			if err != nil {
+				errs <- fmt.Errorf("error downloading chunk %d: %v", chunkIndex, err)
+				return
+			}
+			fmt.Println("Downloaded chunk:", chunkIndex)
+		}(i)
+	}
+
+	wg.Wait()
+	close(errs)
+
+	if len(errs) > 0 {
+		return <-errs
 	}
 
 	out, err := os.Create(outputPath)
@@ -69,7 +88,14 @@ func DownloadFile(metaPath string, outputPath string) error {
 
 func downloadChunk(index int, path string, expectedHash string, peers []string) error {
 
-	for _, peer := range peers {
+	peerShuffling := make([]string, len(peers))
+	copy(peerShuffling, peers)
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(peerShuffling), func(i, j int) {
+		peerShuffling[i], peerShuffling[j] = peerShuffling[j], peerShuffling[i]
+	})
+
+	for _, peer := range peerShuffling {
 		url := fmt.Sprintf("%s/chunk/%d", peer, index)
 
 		resp, err := http.Get(url)
@@ -104,6 +130,8 @@ func downloadChunk(index int, path string, expectedHash string, peers []string) 
 		if err != nil {
 			return fmt.Errorf("error writing chunk %d to file: %v", index, err)
 		}
+
+		fmt.Printf("Downloading chunk  from peer %s\n", peer)
 
 		return nil
 	}

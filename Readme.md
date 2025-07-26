@@ -1,117 +1,85 @@
-```markdown
-# 📡 Kizuna - P2P File Sharing CLI Tool
+# Kizuna - Peer-to-Peer File Sharing in Go
 
-Kizuna is a simple peer-to-peer file sharing tool written in Go, inspired by BitTorrent. It allows you to **seed** and **download** large files using chunked transfers between peers.
+Kizuna is a peer-to-peer file sharing tool written in Go. It allows users to split files into chunks, generate metadata, seed files via HTTP, and download them from multiple peers in parallel with hash verification.
 
 ---
 
-## 📦 Included Files
+## 🔧 Features
+
+- 📦 Chunk-based file sharing
+- 🔐 SHA256 chunk verification
+- 🌐 HTTP server for seeding
+- ⚡ Parallel download from multiple peers
+- 📁 Metadata file (`.meta`) with file and chunk info
+
+---
+
+## 📁 Folder Structure (Inside ZIP)
 
 ```
-
-kizuna/
-├── kizuna.exe         # Windows executable
-├── kizuna-linux       # Linux executable
-├── kizuna-mac         # macOS executable
-├── sample.meta        # Example metadata file (optional)
-└── README.md          # You're reading this!
-
-````
-
----
-
-## 🛠 Requirements
-
-- No dependencies needed.
-- Just double-click or run the appropriate binary from the terminal.
-
-> ✅ No Go installation required. Binaries are precompiled for each platform.
+Kizuna/
+├── kizuna.exe             # The executable (for Windows)
+├── README.md              # This file
+├── files/
+│   ├── chunker.go
+│   ├── hasher.go
+│   └── meta.go
+├── server/
+│   └── server.go
+├── downloads/
+│   └── download.go
+├── types/
+│   └── meta.go
+├── seed.go
+├── download.go
+└── main.go
+```
 
 ---
 
 ## 🚀 Usage
 
-### ✅ 1. Seeding a New File
-
-Start seeding a file on a specific port and optionally define peers:
+### ✅ Seed a File
 
 ```bash
-./kizuna.exe seed --file="path/to/file.pdf" --port=6253 --peers=http://localhost:6254
-````
+./kizuna.exe seed --file="C:\path\to\your\file.pdf" --port=6253 --peers=http://localhost:6253
+```
 
-* `--file`: Path to the file to share
-* `--port`: Port to host the chunk server
-* `--peers`: (Optional) Initial peer list for redundancy
-
-A `.meta` file will be generated automatically.
-
----
-
-### ✅ 2. Seeding from an Existing `.meta` File
-
-If you already have a `.meta` file, you can resume seeding:
+Or use an existing `.meta` file:
 
 ```bash
-./kizuna.exe seed --meta="path/to/file.meta" --port=6253
+./kizuna.exe seed --meta="file.pdf.meta" --port=6253
 ```
 
 ---
 
-### ✅ 3. Downloading a File
-
-Use the `.meta` file to download the file from available peers:
+### ✅ Download a File
 
 ```bash
-./kizuna.exe download --meta="path/to/file.meta" --output="desired_filename.pdf"
+./kizuna.exe download --meta="file.pdf.meta" --output="output.pdf"
 ```
 
-* Downloads chunks in parallel from peers listed in the `.meta`.
+Downloads file from peers listed in `.meta` file in parallel using chunk requests.
 
 ---
 
-## 🌐 Example Workflow
+## 📌 Notes
 
-1. **Seeder (User A):**
-
-   ```bash
-   ./kizuna.exe seed --file="movie.mp4" --port=6253
-   ```
-
-2. **Send the `.meta` file to your friend (User B).**
-
-3. **Downloader (User B):**
-
-   ```bash
-   ./kizuna.exe download --meta="movie.meta" --output="movie.mp4"
-   ```
-
-4. **User B can now also help seed by running:**
-
-   ```bash
-   ./kizuna.exe seed --meta="movie.meta" --port=6254
-   ```
+- Chunk size is 1MB.
+- Make sure all seeders are running when downloading.
+- Each peer must host the `chunks/` directory with chunk files.
 
 ---
 
-## 🖥 Platform Notes
+## 📤 Sharing
 
-* 🪟 `kizuna.exe` for **Windows**
-* 🐧 `kizuna-linux` for **Linux**
-* 🍎 `kizuna-mac` for **macOS**
+To share the project:
 
-Make sure the file is executable (`chmod +x kizuna-*` on UNIX systems).
-
----
-
-## 💬 Contact
-
-Built by \[Your Name].
-Feel free to open issues or contribute on GitHub (if applicable).
+1. Zip the full folder (including `.exe`, `README.md`, and all subdirectories).
+2. Share via Google Drive, GitHub, or email.
 
 ---
 
-## 🔐 Disclaimer
+## 📞 Credits
 
-This is a learning project inspired by BitTorrent. Do **not** use it to share copyrighted or illegal material.
-
-```
+Built with ❤️ in Go by Tanish Mirajkar.
